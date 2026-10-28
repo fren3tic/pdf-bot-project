@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/api/unlock", "destination": "/api/unlock.js" }
+  ]
+}
